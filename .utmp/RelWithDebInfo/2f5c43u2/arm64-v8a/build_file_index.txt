@@ -1,0 +1,2 @@
+C:\Users\zobae\Documents\VT PROJECT 1\Proyecto Bueno\VR_21_04\VR_21_04\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\CMakeLists.txt
+C:\Users\zobae\Documents\VT PROJECT 1\Proyecto Bueno\VR_21_04\VR_21_04\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\GameActivity\CMakeLists.txt

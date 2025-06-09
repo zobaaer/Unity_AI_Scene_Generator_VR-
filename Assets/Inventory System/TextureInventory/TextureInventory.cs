@@ -189,7 +189,8 @@ public class TextureInventory : MonoBehaviour
         Ray ray = new Ray(slot.transform.position, slot.transform.forward);
         if (Physics.Raycast(ray, out RaycastHit hit))
         {
-            if (hit.collider.CompareTag("Editable"))
+            // Check if the object has the tag "Editable" or "Wall"
+            if (hit.collider.CompareTag("Editable") || hit.collider.CompareTag("Wall"))
             {
                 Renderer renderer = hit.collider.GetComponent<Renderer>();
                 if (renderer != null)

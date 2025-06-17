@@ -1,0 +1,2 @@
+C:\Users\ahmd\Documents\Unity_AI_Scene_Generator_VR-\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\CMakeLists.txt
+C:\Users\ahmd\Documents\Unity_AI_Scene_Generator_VR-\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\GameActivity\CMakeLists.txt

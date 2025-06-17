@@ -3,7 +3,6 @@ using UnityEngine.XR;
 using UnityEngine.UI;
 using TMPro;
 using System.IO;
-using System.Collections.Generic;
 
 public class EditObjectMenu : MonoBehaviour
 {
@@ -29,22 +28,8 @@ public class EditObjectMenu : MonoBehaviour
     public Button applyTextureButton;
     public Button revertTextureButton;
 
-    [Header("Movement Parameters")]
-    public TMP_InputField linearFrequencyInput;
-    public TMP_InputField linearAmplitudeInput;
-    public TMP_InputField circularRadiusInput;
-    public TMP_InputField circularSpeedInput;
-    public Button addLinearMovementButton;
-    public Button addCircularMovementButton;
-    public Button startMovementButton;
-    public Button stopMovementButton;
-
-    private bool isMoving = false;
-    private float linearFrequency = 0f;
-    private float linearAmplitude = 0f;
-    private float circularRadius = 0f;
-    private float circularSpeed = 0f;
-    private Vector3 circularCenter;
+    [Header("Movement System")]
+    public MovementManager movementManager; // Assign in Inspector
 
     private InputDevice device;
     private bool previousButtonState;
@@ -54,20 +39,7 @@ public class EditObjectMenu : MonoBehaviour
     private Material originalMaterial;
     private Vector3 originalScale;
 
-    private Dictionary<GameObject, MovementData> objectMovements = new Dictionary<GameObject, MovementData>();
-
-    [System.Serializable]
-    private class MovementData
-    {
-        public bool isMoving = false;
-        public float linearFrequency = 0f;
-        public float linearAmplitude = 0f;
-        public float circularRadius = 0f;
-        public float circularSpeed = 0f;
-        public Vector3 circularCenter;
-    }
-
-    private MovementData movementData = new MovementData();
+    private MovementHolder currentMovementHolder;
 
     private void Start()
     {
@@ -77,10 +49,10 @@ public class EditObjectMenu : MonoBehaviour
         closeButton.onClick.AddListener(CloseMenu);
         applyTextureButton.onClick.AddListener(ApplyTexture);
         revertTextureButton.onClick.AddListener(RevertTexture);
-        addLinearMovementButton.onClick.AddListener(AddLinearMovement);
-        addCircularMovementButton.onClick.AddListener(AddCircularMovement);
-        startMovementButton.onClick.AddListener(StartMovement);
-        stopMovementButton.onClick.AddListener(StopMovement);
+
+        // MovementManager save callback
+        if (movementManager != null)
+            movementManager.OnSaveMovements = SaveMovementsToCurrentObject;
 
         editMenuCanvas.SetActive(false);
     }
@@ -99,9 +71,10 @@ public class EditObjectMenu : MonoBehaviour
             previousButtonState = isPressed;
         }
 
-        foreach (var kvp in objectMovements)
+        // Apply all movements to all objects with MovementHolder
+        foreach (var holder in FindObjectsByType<MovementHolder>(FindObjectsSortMode.None))
         {
-            ApplyMovements(kvp.Key, kvp.Value);
+            ApplyMovements(holder.gameObject, holder.movements);
         }
 
         UpdateTextFields();
@@ -111,7 +84,6 @@ public class EditObjectMenu : MonoBehaviour
     {
         if (editMenuCanvas.activeSelf)
         {
-            // If the menu is already open, close it
             CloseMenu();
             return;
         }
@@ -122,6 +94,13 @@ public class EditObjectMenu : MonoBehaviour
             if (hit.collider.CompareTag("Editable"))
             {
                 currentTarget = hit.collider.gameObject;
+                currentMovementHolder = currentTarget.GetComponent<MovementHolder>();
+                if (currentMovementHolder == null)
+                    currentMovementHolder = currentTarget.AddComponent<MovementHolder>();
+
+                if (movementManager != null)
+                    movementManager.LoadMovements(currentMovementHolder.movements);
+
                 targetRb = currentTarget.GetComponent<Rigidbody>();
                 targetRenderer = currentTarget.GetComponent<Renderer>();
 
@@ -173,7 +152,7 @@ public class EditObjectMenu : MonoBehaviour
         if (texture != null && targetRenderer != null)
         {
             Material unlitMaterial = new Material(Shader.Find("Unlit/Texture"));
-            unlitMaterial.mainTexture = texture;            // Use unlit, the texture is dark otherwise
+            unlitMaterial.mainTexture = texture;
             targetRenderer.material = unlitMaterial;
             revertTextureButton.interactable = true;
             output.text = "<color=green>Texture applied!</color>";
@@ -240,97 +219,45 @@ public class EditObjectMenu : MonoBehaviour
         Debug.Log($"Movement type set to: {index}");
     }
 
-    private void AddLinearMovement()
+    // Called by MovementManager's Save button
+    private void SaveMovementsToCurrentObject()
     {
-        if (currentTarget == null) return;
-
-        if (float.TryParse(linearFrequencyInput.text, out float frequency) &&
-            float.TryParse(linearAmplitudeInput.text, out float amplitude))
+        if (currentMovementHolder != null && movementManager != null)
         {
-            if (!objectMovements.ContainsKey(currentTarget))
+            currentMovementHolder.movements = movementManager.GetAllMovements();
+            Debug.Log($"Saved {currentMovementHolder.movements.Count} movements to {currentTarget.name}");
+        }
+    }
+
+    // Applies all movements in the list to the object
+    private void ApplyMovements(GameObject obj, System.Collections.Generic.List<Movement> movements)
+    {
+        if (movements == null || movements.Count == 0) return;
+
+        Vector3 basePosition = obj.transform.position;
+        Vector3 offset = Vector3.zero;
+
+        foreach (var movement in movements)
+        {
+            if (movement is LinearOscillatoryMovement lom)
             {
-                objectMovements[currentTarget] = new MovementData();
+                float osc = Mathf.Sin(Time.time * lom.frequency) * lom.amplitude;
+                offset += new Vector3(osc, 0f, 0f);
             }
-
-            objectMovements[currentTarget].linearFrequency = frequency;
-            objectMovements[currentTarget].linearAmplitude = amplitude;
-
-            Debug.Log($"Linear movement added: Frequency = {frequency}, Amplitude = {amplitude}");
-        }
-        else
-        {
-            Debug.LogError("Invalid linear movement parameters.");
-        }
-    }
-
-    private void AddCircularMovement()
-    {
-        if (currentTarget == null) return;
-
-        if (float.TryParse(circularRadiusInput.text, out float radius) &&
-            float.TryParse(circularSpeedInput.text, out float speed))
-        {
-            if (!objectMovements.ContainsKey(currentTarget))
+            else if (movement is CircularMovement cm)
             {
-                objectMovements[currentTarget] = new MovementData();
+                float angle = Time.time * cm.angularSpeed;
+                float x = Mathf.Cos(angle) * cm.radius;
+                float z = Mathf.Sin(angle) * cm.radius;
+                offset += new Vector3(x, 0f, z);
             }
-
-            objectMovements[currentTarget].circularRadius = radius;
-            objectMovements[currentTarget].circularSpeed = speed;
-            objectMovements[currentTarget].circularCenter = currentTarget.transform.position;
-
-            Debug.Log($"Circular movement added: Radius = {radius}, Speed = {speed}");
-        }
-        else
-        {
-            Debug.LogError("Invalid circular movement parameters.");
-        }
-    }
-
-    private void StartMovement()
-    {
-        if (currentTarget == null) return;
-
-        if (!objectMovements.ContainsKey(currentTarget))
-        {
-            objectMovements[currentTarget] = new MovementData();
         }
 
-        objectMovements[currentTarget].isMoving = true;
-        Debug.Log("Movement started.");
-    }
-
-    private void StopMovement()
-    {
-        if (currentTarget == null) return;
-
-        if (objectMovements.ContainsKey(currentTarget))
-        {
-            objectMovements[currentTarget].isMoving = false;
-            Debug.Log("Movement stopped.");
-        }
-    }
-
-    private void ApplyMovements(GameObject obj, MovementData movementData)
-    {
-        if (movementData.isMoving)
-        {
-            Vector3 newPosition = obj.transform.position;
-
-            // Apply linear movement
-            newPosition += GetLinearMovementOffset(movementData);
-
-            // Apply circular movement
-            newPosition += GetCircularMovementOffset(obj, movementData);
-
-            // Update the object's position
-            obj.transform.position = newPosition;
-        }
+        obj.transform.position = basePosition + offset;
     }
 
     private void CloseMenu()
     {
-        // Clean up event listeners
         gravityToggle.onValueChanged.RemoveAllListeners();
         massSlider.onValueChanged.RemoveAllListeners();
         scaleSlider.onValueChanged.RemoveAllListeners();
@@ -341,48 +268,5 @@ public class EditObjectMenu : MonoBehaviour
         targetRb = null;
         targetRenderer = null;
         output.text = "Ready";
-    }
-
-    private Vector3 GetLinearMovementOffset(MovementData movementData)
-    {
-        if (movementData.linearFrequency > 0f && movementData.linearAmplitude > 0f)
-        {
-            float oscillation = Mathf.Sin(Time.time * movementData.linearFrequency) * movementData.linearAmplitude;
-            return new Vector3(oscillation, 0f, 0f);
-        }
-
-        return Vector3.zero;
-    }
-
-    private Vector3 GetCircularMovementOffset(GameObject obj, MovementData movementData)
-    {
-        if (movementData.circularRadius > 0f && movementData.circularSpeed > 0f)
-        {
-            float angle = Time.time * movementData.circularSpeed;
-            float x = movementData.circularCenter.x + Mathf.Cos(angle) * movementData.circularRadius;
-            float z = movementData.circularCenter.z + Mathf.Sin(angle) * movementData.circularRadius;
-            return new Vector3(x - obj.transform.position.x, 0f, z - obj.transform.position.z);
-        }
-
-        return Vector3.zero;
-    }
-
-    private void PrintMovementData()
-    {
-        Debug.Log("Printing movement data:");
-
-        foreach (var kvp in objectMovements)
-        {
-            GameObject obj = kvp.Key;
-            MovementData data = kvp.Value;
-
-            Debug.Log($"Object: {obj.name}");
-            Debug.Log($"  Is Moving: {data.isMoving}");
-            Debug.Log($"  Linear Frequency: {data.linearFrequency}");
-            Debug.Log($"  Linear Amplitude: {data.linearAmplitude}");
-            Debug.Log($"  Circular Radius: {data.circularRadius}");
-            Debug.Log($"  Circular Speed: {data.circularSpeed}");
-            Debug.Log($"  Circular Center: {data.circularCenter}");
-        }
     }
 }

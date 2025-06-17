@@ -1,0 +1,10 @@
+# ninja log v5
+8	1626	7718962717037051	GameActivity/CMakeFiles/game.dir/UGAConfiguration.cpp.o	a362ae614a061b58
+29	1738	7718962716956794	GameActivity/CMakeFiles/game.dir/UGAInputKeyEvent.cpp.o	f8ba599948ec98d9
+35	1766	7718962718489435	GameActivity/CMakeFiles/game.dir/UGAInputMotionEvent.cpp.o	e2190d3f612057a0
+24	1784	7718962718419145	GameActivity/CMakeFiles/game.dir/UGAEntry.cpp.o	32d9f51666e43e8b
+42	1824	7718962719002933	GameActivity/CMakeFiles/game.dir/UGASoftKeyboard.cpp.o	16d81937a7ea8a62
+1	1868	7718962719700420	GameActivity/CMakeFiles/game.dir/UGADebug.cpp.o	1524cffd974fa75d
+18	2058	7718962721654351	GameActivity/CMakeFiles/game.dir/UGAInput.cpp.o	cda27109e646c629
+13	2237	7718962723436950	GameActivity/CMakeFiles/game.dir/UGAApplication.cpp.o	39d0c641bcf0e871
+2238	2389	7718962724992096	C:/Users/ahmd/Documents/Unity_AI_Scene_Generator_VR-/Library/Bee/Android/Prj/IL2CPP/Gradle/unityLibrary/build/intermediates/cxx/RelWithDebInfo/h282o584/obj/arm64-v8a/libgame.so	c5a89536e93941fd

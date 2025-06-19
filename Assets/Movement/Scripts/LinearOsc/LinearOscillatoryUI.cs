@@ -6,6 +6,9 @@ public class LinearOscillatoryUI : MonoBehaviour, IMovementUI
 {
     public TMP_InputField amplitudeInput;
     public TMP_InputField frequencyInput;
+    public TMP_InputField axisXInput;
+    public TMP_InputField axisYInput;
+    public TMP_InputField axisZInput;
     public Button deleteButton;
 
     private MovementManager manager;
@@ -15,8 +18,11 @@ public class LinearOscillatoryUI : MonoBehaviour, IMovementUI
     {
         return new LinearOscillatoryMovement
         {
-            amplitude = float.Parse(amplitudeInput.text),
-            frequency = float.Parse(frequencyInput.text)
+            amplitude = float.TryParse(amplitudeInput.text, out var a) ? a : 0f,
+            frequency = float.TryParse(frequencyInput.text, out var f) ? f : 0f,
+            axisX = float.TryParse(axisXInput.text, out var x) ? x : 1f,
+            axisY = float.TryParse(axisYInput.text, out var y) ? y : 0f,
+            axisZ = float.TryParse(axisZInput.text, out var z) ? z : 0f
         };
     }
 

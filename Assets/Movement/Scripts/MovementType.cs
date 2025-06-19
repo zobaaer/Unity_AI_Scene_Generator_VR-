@@ -12,6 +12,9 @@ public class LinearOscillatoryMovement : Movement
 {
     public float amplitude;
     public float frequency;
+    public float axisX = 1f;
+    public float axisY = 0f;
+    public float axisZ = 0f;
 
     public override string MovementType => "Linear Oscillatory";
 }
@@ -23,4 +26,16 @@ public class CircularMovement : Movement
     public float angularSpeed;
 
     public override string MovementType => "Circular";
+}
+
+[Serializable]
+public class RotationMovement : Movement
+{
+    public float axisX;
+    public float axisY;
+    public float axisZ;
+    public float speed;
+    public bool clockwise;
+
+    public override string MovementType => "Rotation";
 }

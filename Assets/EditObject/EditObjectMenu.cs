@@ -232,17 +232,26 @@ public class EditObjectMenu : MonoBehaviour
     // Applies all movements in the list to the object
     private void ApplyMovements(GameObject obj, System.Collections.Generic.List<Movement> movements)
     {
+        // Reset physics movement
+        var rb = obj.GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
+
         if (movements == null || movements.Count == 0) return;
 
-        Vector3 basePosition = obj.transform.position;
         Vector3 offset = Vector3.zero;
+        Quaternion rotationOffset = Quaternion.identity;
 
         foreach (var movement in movements)
         {
             if (movement is LinearOscillatoryMovement lom)
             {
+                Vector3 axis = new Vector3(lom.axisX, lom.axisY, lom.axisZ).normalized;
                 float osc = Mathf.Sin(Time.time * lom.frequency) * lom.amplitude;
-                offset += new Vector3(osc, 0f, 0f);
+                offset += axis * osc;
             }
             else if (movement is CircularMovement cm)
             {
@@ -251,9 +260,17 @@ public class EditObjectMenu : MonoBehaviour
                 float z = Mathf.Sin(angle) * cm.radius;
                 offset += new Vector3(x, 0f, z);
             }
+            else if (movement is RotationMovement rm)
+            {
+                Vector3 axis = new Vector3(rm.axisX, rm.axisY, rm.axisZ).normalized;
+                float direction = rm.clockwise ? -1f : 1f;
+                float angle = Time.time * rm.speed * direction;
+                rotationOffset *= Quaternion.AngleAxis(angle, axis);
+            }
         }
 
-        obj.transform.position = basePosition + offset;
+        obj.transform.position += offset;
+        obj.transform.rotation *= rotationOffset;
     }
 
     private void CloseMenu()

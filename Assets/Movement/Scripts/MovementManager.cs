@@ -12,6 +12,7 @@ public class MovementManager : MonoBehaviour
 
     public GameObject linearOscillatoryPrefab;
     public GameObject circularPrefab;
+    public GameObject rotationPrefab; // Assign in Inspector
 
     private List<GameObject> spawnedMovementUIs = new List<GameObject>();
 
@@ -32,6 +33,7 @@ public class MovementManager : MonoBehaviour
         {
             case 0: prefabToInstantiate = linearOscillatoryPrefab; break;
             case 1: prefabToInstantiate = circularPrefab; break;
+            case 2: prefabToInstantiate = rotationPrefab; break;
         }
 
         if (prefabToInstantiate != null)
@@ -60,6 +62,10 @@ public class MovementManager : MonoBehaviour
             {
                 movements.Add(circular.GetMovement());
             }
+            else if (ui.TryGetComponent(out RotationUI rotation))
+            {
+                movements.Add(rotation.GetMovement());
+            }
         }
 
         return movements;
@@ -78,6 +84,8 @@ public class MovementManager : MonoBehaviour
                 prefab = linearOscillatoryPrefab;
             else if (movement is CircularMovement)
                 prefab = circularPrefab;
+            else if (movement is RotationMovement)
+                prefab = rotationPrefab;
 
             if (prefab != null)
             {
@@ -91,12 +99,24 @@ public class MovementManager : MonoBehaviour
                     var ui = uiInstance.GetComponent<LinearOscillatoryUI>();
                     ui.amplitudeInput.text = lom.amplitude.ToString();
                     ui.frequencyInput.text = lom.frequency.ToString();
+                    ui.axisXInput.text = lom.axisX.ToString();
+                    ui.axisYInput.text = lom.axisY.ToString();
+                    ui.axisZInput.text = lom.axisZ.ToString();
                 }
                 else if (movement is CircularMovement cm)
                 {
                     var ui = uiInstance.GetComponent<CircularUI>();
                     ui.radiusInput.text = cm.radius.ToString();
                     ui.angularSpeedInput.text = cm.angularSpeed.ToString();
+                }
+                else if (movement is RotationMovement rm)
+                {
+                    var ui = uiInstance.GetComponent<RotationUI>();
+                    ui.axisXInput.text = rm.axisX.ToString();
+                    ui.axisYInput.text = rm.axisY.ToString();
+                    ui.axisZInput.text = rm.axisZ.ToString();
+                    ui.speedInput.text = rm.speed.ToString();
+                    ui.clockwiseToggle.isOn = rm.clockwise;
                 }
                 spawnedMovementUIs.Add(uiInstance);
             }
